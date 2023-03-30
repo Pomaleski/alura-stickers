@@ -1,36 +1,44 @@
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        // fazer uma conexão HTTP e buscar os top 250 filmes
-        String url = "https://raw.githubusercontent.com/alura-cursos/imersao-java-2-api/main/TopMovies.json";
-        var endereco = URI.create(url);
-        var client = HttpClient.newHttpClient();
-        var request = HttpRequest.newBuilder(endereco).GET().build();
-        HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        String body = response.body();
+        
+        // pegando a chave da api de um arquivo .env 
+        Properties props = new Properties();
+        try {
+            FileInputStream envFile = new FileInputStream(".env");
+            props.load(envFile);
+            envFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String API_KEY = props.getProperty("NASA_API_KEY");
 
-        // extrair só os dados que interessam
-        // (título, poster, classificação)
-        var parser = new JsonParser();
-        List<Map<String, String>> listaDeFilmes = parser.parse(body);
+        // fazer uma conexão HTTP com API
+        String url = "https://api.nasa.gov/planetary/apod?api_key=" + API_KEY
+            + "&start_date=2023-02-26&end_date=2023-02-28";
+
+        var http = new ClienteHttp();
+        String json = http.buscaDados(url);
+
+        // extrair de dados em json
+        ExtratorDeConteudo extrator =
+            // new ExtratorDeConteudoDoIMDB();
+            new ExtratorDeConteudoDaNasa();
+        List<Conteudo> conteudos = extrator.extraiConteudos(json);
 
         // exibir e manipular os dados
         var geradora = new GeradoraDeFigurinhas();
-        for (Map<String,String> filme : listaDeFilmes) {
-            String urlImagem = filme.get("image");
-            String titulo = filme.get("title");
+        
+        for (Conteudo conteudo : conteudos) {
 
-            InputStream inputStream = new URL(urlImagem).openStream();
-            String nomeArquivo = titulo + ".png";
+            InputStream inputStream = new URL(conteudo.getUrlImagem()).openStream();
+            String nomeArquivo = conteudo.getTitulo() + ".png";
 
             geradora.cria(inputStream, nomeArquivo);
         }        
