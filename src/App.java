@@ -20,16 +20,18 @@ public class App {
         String API_KEY = props.getProperty("NASA_API_KEY");
 
         // fazer uma conexão HTTP com API
-        String url = "https://api.nasa.gov/planetary/apod?api_key=" + API_KEY
-            + "&start_date=2023-02-26&end_date=2023-02-28";
+        // String url = "https://api.nasa.gov/planetary/apod?api_key=" + API_KEY
+        //     + "&start_date=2023-02-26&end_date=2023-02-28";
+
+        String url = "http://localhost:8080/linguagens";
 
         var http = new ClienteHttp();
         String json = http.buscaDados(url);
 
         // extrair de dados em json
         ExtratorDeConteudo extrator =
-            // new ExtratorDeConteudoDoIMDB();
-            new ExtratorDeConteudoDaNasa();
+            new ExtratorDeConteudoDoIMDB();
+            // new ExtratorDeConteudoDaNasa();
         List<Conteudo> conteudos = extrator.extraiConteudos(json);
 
         // exibir e manipular os dados
